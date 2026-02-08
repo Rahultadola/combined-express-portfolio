@@ -1,0 +1,32 @@
+{
+  "opinions": [
+    {
+      "id": 1770209422593,
+      "votes": 10,
+      "userName": "rahul",
+      "title": "Destructuring in Function Parameter Lists",
+      "body": "If a function accepts a parameter that will contain an object it can be de-structured to \"pull out\" the object properties and make them available as locally scoped variables (i.e., variables only available inside the function body)"
+    },
+    {
+      "id": 1752154651335,
+      "votes": 10,
+      "userName": "rahul",
+      "title": "React is Awesome",
+      "body": "React is an amazing JavaScript library! Despite all it's shortcomings."
+    },
+    {
+      "id": 1,
+      "userName": "rahul",
+      "title": "Do yourself a favor and learn React!",
+      "body": "React is an amazing JavaScript library!\n\nDespite all it's shortcomings.",
+      "votes": 18
+    },
+    {
+      "id": 2,
+      "userName": "rahul",
+      "title": "React has more depth than you might first think!",
+      "body": "React is a great library to learn, but it's not just about the basics. Dive deeper!\nFor example with this course!",
+      "votes": 11
+    }
+  ]
+}
