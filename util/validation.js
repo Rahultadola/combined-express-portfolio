@@ -10,7 +10,3 @@ export function isValidDate(value) {
 export function isValidImageUrl(value) {
   return value && value.startsWith('http');
 }
-
-// exports.isValidText = isValidText;
-// exports.isValidDate = isValidDate;
-// exports.isValidImageUrl = isValidImageUrl;

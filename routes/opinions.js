@@ -1,52 +1,76 @@
 import fs from 'node:fs/promises';
 import express from 'express';
 
+import Opinion  from '../models/Opinions.js'
+
 
 const router = express.Router();
-
-const dbPath = './data/opinions.json';
+// const dbPath = './data/opinions.json';
 
 
 
 async function loadOpinions() {
-  try {
-    const dbFileData = await fs.readFile(dbPath);
-    const parsedData = JSON.parse(dbFileData);
-    return parsedData.opinions;
-  } catch (error) {
-    return [];
-  }
+  const opinions = await Opinion.find();
+  return opinions
+  // try {
+  //   const dbFileData = await fs.readFile(dbPath);
+  //   const parsedData = JSON.parse(dbFileData);
+  //   return parsedData.opinions;
+  // } catch (error) {
+  //   return [];
+  // }
 }
 
 async function saveOpinion(opinion) {
-  const opinions = await loadOpinions();
-  const newOpinion = { id: new Date().getTime(), votes: 0, ...opinion };
-  opinions.unshift(newOpinion);
-  const dataToSave = { opinions };
-  await fs.writeFile(dbPath, JSON.stringify(dataToSave, null, 2));
-  return newOpinion;
+  const newOpinion = new Opinion({ id: new Date().getTime(), votes: 0, ...opinion })
+  const savedOpinion = await newOpinion.save();
+  return savedOpinion;
+  // const opinions = await loadOpinions();
+  // const newOpinion = { id: new Date().getTime(), votes: 0, ...opinion };
+  // opinions.unshift(newOpinion);
+  // const dataToSave = { opinions };
+  // await fs.writeFile(dbPath, JSON.stringify(dataToSave, null, 2));
+  // return newOpinion;
 }
 
 async function upvoteOpinion(id) {
-  const opinions = await loadOpinions();
-  const opinion = opinions.find((o) => o.id === id);
-  if (!opinion) {
-    return null;
-  }
-  opinion.votes++;
-  await fs.writeFile(dbPath, JSON.stringify({ opinions }, null, 2));
-  return opinion;
+  const updatedOpinion = await Opinion.findOneAndUpdate(
+    { "id": id },
+    { $inc: { "$.votes": 1} },
+    { new: true}
+  );
+
+  if (!updatedOpinion) return null;
+
+  return updatedOpinion;
+  // const opinions = await loadOpinions();
+  // const opinion = opinions.find((o) => o.id === id);
+  // if (!opinion) {
+  //   return null;
+  // }
+  // opinion.votes++;
+  // await fs.writeFile(dbPath, JSON.stringify({ opinions }, null, 2));
+  // return opinion;
 }
 
 async function downvoteOpinion(id) {
-  const opinions = await loadOpinions();
-  const opinion = opinions.find((o) => o.id === id);
-  if (!opinion) {
-    return null;
-  }
-  opinion.votes--;
-  await fs.writeFile(dbPath, JSON.stringify({ opinions }, null, 2));
-  return opinion;
+  const updatedOpinion = await Opinion.findOneAndUpdate(
+    { "id": id , "quantity": { $gt: 0} },
+    { $inc: { "$.votes": -1} },
+    { new: true}
+  );
+
+  if (!updatedOpinion) return null;
+
+  return updatedOpinion;
+  // const opinions = await loadOpinions();
+  // const opinion = opinions.find((o) => o.id === id);
+  // if (!opinion) {
+  //   return null;
+  // }
+  // opinion.votes--;
+  // await fs.writeFile(dbPath, JSON.stringify({ opinions }, null, 2));
+  // return opinion;
 }
 
 

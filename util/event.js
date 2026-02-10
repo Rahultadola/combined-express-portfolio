@@ -1,8 +1,7 @@
 import fs from 'node:fs/promises';
-
+import RouterEvent from '../models/RouterEvent.js';
 import { v4 as generateId } from 'uuid';
 
-// import { NotFoundError } from './errors.js';
 
 class NotFoundError {
   constructor(message) {
@@ -12,67 +11,69 @@ class NotFoundError {
 }
 
 
-export async function readData() {
-  const data = await fs.readFile('./data/router-events.json', 'utf8');
-  return JSON.parse(data);
-}
+// export async function readData() {
+//   const data = await fs.readFile('./data/router-events.json', 'utf8');
+//   return JSON.parse(data);
+// }
 
-export async function writeData(data) {
-  await fs.writeFile('./data/router-events.json', JSON.stringify(data));
-}
+// export async function writeData(data) {
+//   await fs.writeFile('./data/router-events.json', JSON.stringify(data));
+// }
 
 export async function getAll() {
-  const storedData = await readData();
-  if (!storedData.events) {
-    throw new NotFoundError('Could not find any events.');
+  try {
+    const events = await RouterEvent.find()
+    return events
+  } catch(err) {
+    throw new NotFoundError(err.message)
   }
-  return storedData.events;
+
 }
 
 export async function get(id) {
-  const storedData = await readData();
-  if (!storedData.events || storedData.events.length === 0) {
+  const ev = await RouterEvent.findById(id);
+  
+  if (!ev) {
     throw new NotFoundError('Could not find any events.');
   }
 
-  const event = storedData.events.find((ev) => ev.id === id);
-  if (!event) {
-    throw new NotFoundError('Could not find event for id ' + id);
-  }
-
-  return event;
+  return ev;
 }
 
 export async function add(data) {
-  const storedData = await readData();
-  storedData.events.unshift({ ...data, id: generateId() });
-  await writeData(storedData);
+  try {
+    const ev = new RouterEvent({ ...data, id: generateId() })
+    const savedEv = await ev.save();
+    return savedEv;
+  } catch (err) {  
+    throw new NotFoundError('Erroe creating event in database.')
+  }
+  
 }
 
 export async function replace(id, data) {
-  const storedData = await readData();
-  if (!storedData.events || storedData.events.length === 0) {
-    throw new NotFoundError('Could not find any events.');
+  try {
+    const updatedEvent = await Event.findOneAndUpdate(
+      { id: id },
+      { $set: data }, 
+      { 
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!updatedEvent) {
+      throw new NotFoundError("Event not found");
+    }
+
+    return updatedEvent;
+  } catch (err) {
+    throw new NotFoundError(err.message);
   }
-
-  const index = storedData.events.findIndex((ev) => ev.id === id);
-  if (index < 0) {
-    throw new NotFoundError('Could not find event for id ' + id);
-  }
-
-  storedData.events[index] = { ...data, id };
-
-  await writeData(storedData);
 }
+
+
 
 export async function remove(id) {
-  const storedData = await readData();
-  const updatedData = storedData.events.filter((ev) => ev.id !== id);
-  await writeData({events: updatedData});
+  await RouterEvent.findOneAndDelete({ id: id });
 }
-
-// exports.getAll = getAll;
-// exports.get = get;
-// exports.add = add;
-// exports.replace = replace;
-// exports.remove = remove;

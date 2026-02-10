@@ -1,41 +1,47 @@
 import fs from 'node:fs/promises';
 import express from 'express';
+import TanstackEvent from '../models/TanstackEvent.js';
+
 
 const router = express.Router();
 
 
 router.get('/events', async (req, res) => {
   const { max, search } = req.query;
-  const eventsFileContent = await fs.readFile('./data/tanstack-events.json');
-  let events = JSON.parse(eventsFileContent);
 
-  if (search) {
-    events = events.filter((event) => {
-      const searchableText = `${event.title} ${event.description} ${event.location}`;
-      return searchableText.toLowerCase().includes(search.toLowerCase());
-    });
+  try {
+    let query = {};
+
+    if (search) {
+      const searchRegex = new RegExp(search, 'i'); // 'i' for case-insensitive
+      query = {
+        $or: [
+          { title: searchRegex },
+          { description: searchRegex },
+          { location: searchRegex }
+        ]
+      };
+    }
+
+    let mongoQuery = Event.find(query).select('id title image date location');
+
+    if (max) {
+      mongoQuery = mongoQuery.sort({ _id: -1 }).limit(parseInt(max));
+    }
+
+    const events = await mongoQuery;
+
+    res.json({ events });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch events" });
   }
-
-  if (max) {
-    events = events.slice(events.length - max, events.length);
-  }
-
-  res.json({
-    events: events.map((event) => ({
-      id: event.id,
-      title: event.title,
-      image: event.image,
-      date: event.date,
-      location: event.location,
-    })),
-  });
 });
+
 
 
 router.get('/events/images', async (req, res) => {
   const imagesFileContent = await fs.readFile('./data/tanstack-images.json');
   const images = JSON.parse(imagesFileContent);
-
   res.json({ images });
 });
 
@@ -44,21 +50,22 @@ router.get('/events/images', async (req, res) => {
 router.get('/events/:id', async (req, res) => {
   const { id } = req.params;
 
-  const eventsFileContent = await fs.readFile('./data/tanstack-events.json');
-  const events = JSON.parse(eventsFileContent);
+  try {
+    const event = await Event.findOne({ id: id }).lean();
 
-  const event = events.find((event) => event.id === id);
+    if (!event) {
+      return res
+        .status(404)
+        .json({ message: `For the id ${id}, no event could be found.` });
+    }
 
-  if (!event) {
-    return res
-      .status(404)
-      .json({ message: `For the id ${id}, no event could be found.` });
-  }
-
-  setTimeout(() => {
     res.json({ event });
-  }, 1000);
+
+  } catch (err) {
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
+
 
 
 
@@ -112,87 +119,78 @@ router.post('/events', async (req, res) => {
     return res.status(400).json({ message:  errMessage});
   }
 
-  const eventsFileContent = await fs.readFile('./data/tanstack-events.json');
-  const events = JSON.parse(eventsFileContent);
+  try {
+    const newEvent = new Event({
+      id: Math.round(Math.random() * 10000).toString(),
+      ...eventData,
+    });
 
-  const newEvent = {
-    id: Math.round(Math.random() * 10000).toString(),
-    ...event,
-  };
+    await newEvent.save();
+    res.status(201).json({ event: newEvent });
+    
+  } catch (err) {
+    res.status(400).json({ 
+      message: "Could not create event.", 
+      error: err.message 
+    });
+  }
 
-  events.push(newEvent);
 
-  await fs.writeFile('./data/tanstack-events.json', JSON.stringify(events));
-
-  res.json({ event: newEvent });
 });
-
 
 
 router.put('/events/:id', async (req, res) => {
   const { id } = req.params;
   const { event } = req.body;
 
-  console.log("id: ",id, "\nevent:", req.body)
-
   if (!event) {
     return res.status(400).json({ message: 'Event is required' });
   }
 
-  if (
-    !event.title?.trim() ||
-    !event.description?.trim() ||
-    !event.date?.trim() ||
-    !event.time?.trim() ||
-    !event.image?.trim() ||
-    !event.location?.trim()
-  ) {
-    return res.status(400).json({ message: 'Invalid data provided.' });
+  try {
+    const updatedEvent = await Event.findOneAndUpdate(
+      { id: id }, 
+      { $set: event }, 
+      { 
+        new: true,           // Return the document AFTER update
+        runValidators: true  // Triggers your Schema's 'required' and 'trim' rules
+      }
+    );
+
+    if (!updatedEvent) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
+
+    res.json({ event: updatedEvent });
+
+  } catch (err) {
+    res.status(400).json({ 
+      message: 'Invalid data provided.', 
+      error: err.message 
+    });
   }
-
-  const eventsFileContent = await fs.readFile('./data/tanstack-events.json');
-  const events = JSON.parse(eventsFileContent);
-
-  const eventIndex = events.findIndex((event) => event.id === id);
-
-  if (eventIndex === -1) {
-    return res.status(404).json({ message: 'Event not found' });
-  }
-
-  events[eventIndex] = {
-    id,
-    ...event,
-  };
-
-  await fs.writeFile('./data/tanstack-events.json', JSON.stringify(events));
-
-  setTimeout(() => {
-    res.json({ event: events[eventIndex] });
-  }, 1000);
 });
-
 
 
 
 router.delete('/events/:id', async (req, res) => {
   const { id } = req.params;
 
-  const eventsFileContent = await fs.readFile('./data/tanstack-events.json');
-  const events = JSON.parse(eventsFileContent);
+  try {
+    const deletedEvent = await Event.findOneAndDelete({ id: id });
 
-  const eventIndex = events.findIndex((event) => event.id === id);
+    if (!deletedEvent) {
+      return res.status(404).json({ message: 'Event not found' });
+    }
 
-  if (eventIndex === -1) {
-    return res.status(404).json({ message: 'Event not found' });
-  }
-
-  events.splice(eventIndex, 1);
-
-  await fs.writeFile('./data/tanstack-events.json', JSON.stringify(events));
-
-  setTimeout(() => {
     res.json({ message: 'Event deleted' });
-  }, 1000);
+  } catch (err) {
+    res.status(500).json({ 
+      message: 'Failed to delete event.', 
+      error: err.message 
+    });
+  }
 });
+
 
 export default router;
