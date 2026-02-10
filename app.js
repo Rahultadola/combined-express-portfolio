@@ -7,7 +7,22 @@ import placePickerRoutes from './routes/place-picker.js';
 import tanstackEventRoutes from './routes/tanstack-events.js';
 import routerEventRoutes from './routes/router-events.js';
 
+
+import mongoose from 'mongoose';
+import 'dotenv/config';
+
+const PORT = process.env.PORT || 3000;
+const mongoDBURL = process.env.MONGODB_URL;
+
+
 const app = express();
+
+
+mongoose.connect(mongoDBURL).then(() => {
+  console.log("Connection Successful");
+  app.listen(PORT)
+}).catch(err => console.error("DB Connection error: ", err))
+
 
 app.use(bodyParser.json());
 app.use(express.json());
@@ -42,6 +57,6 @@ app.use((req, res) => {
 });
 
 
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
-});
+// app.listen(3000, () => {
+//   console.log('Server running on http://localhost:3000');
+// });

@@ -1,6 +1,8 @@
+import express from 'express';
 import path from 'path';
 import fs from 'node:fs/promises';
-import express from 'express'
+
+import Order from "../models/FoodOrder.js";
 
 
 const router = express.Router();
@@ -44,15 +46,28 @@ router.post('/orders', async (req, res) => {
     });
   }
 
-  const newOrder = {
+  const newOrder = new Order({
     ...orderData,
-    id: (Math.random() * 1000).toString(),
-  };
-  const orders = await fs.readFile(getFilePath('orders.json'), 'utf8');
-  const allOrders = JSON.parse(orders);
-  allOrders.push(newOrder);
-  await fs.writeFile(getFilePath('orders.json'), JSON.stringify(allOrders));
+  });
+
+  // const orders = await fs.readFile(getFilePath('orders.json'), 'utf8');
+  // const allOrders = JSON.parse(orders);
+  newOrder.save();
+  // await fs.writeFile(getFilePath('orders.json'), JSON.stringify(allOrders));
   res.status(201).json({ message: 'Order created!' });
+
+  // const newOrder = {
+  //   ...orderData,
+  //   id: (Math.random() * 1000).toString(),
+  // };
+  // const orders = await fs.readFile(getFilePath('orders.json'), 'utf8');
+  // const allOrders = JSON.parse(orders);
+  // allOrders.push(newOrder);
+  // await fs.writeFile(getFilePath('orders.json'), JSON.stringify(allOrders));
+  // res.status(201).json({ message: 'Order created!' });
+
+
+
 });
 
 
