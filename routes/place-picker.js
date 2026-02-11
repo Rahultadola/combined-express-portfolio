@@ -18,7 +18,7 @@ router.get('/user-places', async (req, res) => {
   // const places = JSON.parse(fileContent);
 
   const up = await UserPlaces.find();
-  res.status(200).json({ up });
+  res.status(200).json({ places: up });
 });
 
 
