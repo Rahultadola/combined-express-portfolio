@@ -11,10 +11,7 @@ const router = express.Router();
 router.get('/', async (req, res, next) => {
   try {
     const events = await getAll();
-
-    setTimeout(() => {
-      res.json({ events: events });
-    }, 5000)
+    res.json({ events: events });
   } catch (error) {
     next(error);
   }
@@ -95,9 +92,7 @@ router.patch('/:id', async (req, res, next) => {
 
   try {
     await replace(req.params.id, data);
-    setTimeout(() => {
-      res.json({ message: 'Event updated.', event: data });
-    }, 10000)
+    res.json({ message: 'Event updated.', event: data });
   } catch (error) {
     next(error);
   }
