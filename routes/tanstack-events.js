@@ -23,7 +23,7 @@ router.get('/events', async (req, res) => {
       };
     }
 
-    let mongoQuery = TanstackEvent.find(query).select('id title image date location');
+    let mongoQuery = TanstackEvent.find(query);
 
     if (max) {
       mongoQuery = mongoQuery.sort({ _id: -1 }).limit(parseInt(max));
@@ -79,8 +79,6 @@ router.post('/events', async (req, res) => {
   let error = false;
   let errMessage = 'Invalid data provided.';
 
-  // console.log(event);
-
   if (!event.title?.trim()) {
     console.log("Title error", event.title)
     error = true
@@ -122,7 +120,7 @@ router.post('/events', async (req, res) => {
   try {
     const newEvent = new TanstackEvent({
       id: Math.round(Math.random() * 10000).toString(),
-      ...eventData,
+      ...event,
     });
 
     await newEvent.save();
