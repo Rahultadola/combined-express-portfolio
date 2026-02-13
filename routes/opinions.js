@@ -23,7 +23,7 @@ async function saveOpinion(opinion) {
 async function upvoteOpinion(id) {
   const updatedOpinion = await Opinion.findOneAndUpdate(
     { "id": id },
-    { inc: { "votes": 1} },
+    { $inc: { "votes": 1} },
     { returnDocument: 'after'}
   );
 
