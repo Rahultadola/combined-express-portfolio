@@ -12,65 +12,36 @@ const router = express.Router();
 async function loadOpinions() {
   const opinions = await Opinion.find();
   return opinions
-  // try {
-  //   const dbFileData = await fs.readFile(dbPath);
-  //   const parsedData = JSON.parse(dbFileData);
-  //   return parsedData.opinions;
-  // } catch (error) {
-  //   return [];
-  // }
 }
 
 async function saveOpinion(opinion) {
   const newOpinion = new Opinion({ id: new Date().getTime(), votes: 0, ...opinion })
   const savedOpinion = await newOpinion.save();
   return savedOpinion;
-  // const opinions = await loadOpinions();
-  // const newOpinion = { id: new Date().getTime(), votes: 0, ...opinion };
-  // opinions.unshift(newOpinion);
-  // const dataToSave = { opinions };
-  // await fs.writeFile(dbPath, JSON.stringify(dataToSave, null, 2));
-  // return newOpinion;
 }
 
 async function upvoteOpinion(id) {
   const updatedOpinion = await Opinion.findOneAndUpdate(
     { "id": id },
     { $inc: { "$.votes": 1} },
-    { new: true}
+    { returnDocument: 'after'}
   );
 
   if (!updatedOpinion) return null;
 
   return updatedOpinion;
-  // const opinions = await loadOpinions();
-  // const opinion = opinions.find((o) => o.id === id);
-  // if (!opinion) {
-  //   return null;
-  // }
-  // opinion.votes++;
-  // await fs.writeFile(dbPath, JSON.stringify({ opinions }, null, 2));
-  // return opinion;
 }
 
 async function downvoteOpinion(id) {
   const updatedOpinion = await Opinion.findOneAndUpdate(
-    { "id": id , "quantity": { $gt: 0} },
+    { "id": id },
     { $inc: { "$.votes": -1} },
-    { new: true}
+    { returnDocument: 'after'}
   );
 
   if (!updatedOpinion) return null;
 
   return updatedOpinion;
-  // const opinions = await loadOpinions();
-  // const opinion = opinions.find((o) => o.id === id);
-  // if (!opinion) {
-  //   return null;
-  // }
-  // opinion.votes--;
-  // await fs.writeFile(dbPath, JSON.stringify({ opinions }, null, 2));
-  // return opinion;
 }
 
 
@@ -118,7 +89,7 @@ router.post('/:id/upvote', async (req, res) => {
 
 router.post('/:id/downvote', async (req, res) => {
   const { id } = req.params;
-  await new Promise((resolve) => setTimeout(resolve, 1000));
+  // await new Promise((resolve) => setTimeout(resolve, 1000));
   try {
     const opinion = await downvoteOpinion(Number(id));
     if (!opinion) {
