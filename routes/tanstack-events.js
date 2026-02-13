@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/events', async (req, res) => {
   const { max, search } = req.query;
 
-  try {
+  // try {
     let query = {};
 
     if (search) {
@@ -23,7 +23,7 @@ router.get('/events', async (req, res) => {
       };
     }
 
-    let mongoQuery = Event.find(query).select('id title image date location');
+    let mongoQuery = TanstackEvent.find(query).select('id title image date location');
 
     if (max) {
       mongoQuery = mongoQuery.sort({ _id: -1 }).limit(parseInt(max));
@@ -32,9 +32,9 @@ router.get('/events', async (req, res) => {
     const events = await mongoQuery;
 
     res.json({ events });
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch events" });
-  }
+  // } catch (err) {
+  //   res.status(500).json({ error: "Failed to fetch events" });
+  // }
 });
 
 
@@ -51,7 +51,7 @@ router.get('/events/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const event = await Event.findOne({ id: id }).lean();
+    const event = await TanstackEvent.findOne({ id: id }).lean();
 
     if (!event) {
       return res
@@ -120,7 +120,7 @@ router.post('/events', async (req, res) => {
   }
 
   try {
-    const newEvent = new Event({
+    const newEvent = new TanstackEvent({
       id: Math.round(Math.random() * 10000).toString(),
       ...eventData,
     });
@@ -148,7 +148,7 @@ router.put('/events/:id', async (req, res) => {
   }
 
   try {
-    const updatedEvent = await Event.findOneAndUpdate(
+    const updatedEvent = await TanstackEvent.findOneAndUpdate(
       { id: id }, 
       { $set: event }, 
       { 
@@ -177,7 +177,7 @@ router.delete('/events/:id', async (req, res) => {
   const { id } = req.params;
 
   try {
-    const deletedEvent = await Event.findOneAndDelete({ id: id });
+    const deletedEvent = await TanstackEvent.findOneAndDelete({ id: id });
 
     if (!deletedEvent) {
       return res.status(404).json({ message: 'Event not found' });
